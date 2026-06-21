@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Controller;
+namespace App\Http\Controller;
 
-use App\Entity\User;
-use App\Form\RegistrationFormType;
-use App\Repository\UserRepository;
-use App\Security\EmailVerifier;
+use App\Domain\Auth\Entity\User;
+use App\Domain\Auth\Form\RegistrationFormType;
+use App\Domain\Auth\Repository\UserRepository;
+use App\Domain\Auth\Security\EmailVerifier;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,7 +20,7 @@ class RegistrationController extends AbstractController
 {
     public function __construct(private EmailVerifier $emailVerifier) {}
 
-    #[Route("/register", name: "app_register")]
+    #[Route("/inscription", name: "app_register")]
     public function register(
         Request $request,
         UserPasswordHasherInterface $userPasswordHasher,
@@ -47,9 +47,9 @@ class RegistrationController extends AbstractController
                 "app_verify_email",
                 $user,
                 new TemplatedEmail()
-                    ->from(new Address("mailer@camping.fr", "camping"))
+                    ->from(new Address("mailer@camping.fr", "Camping"))
                     ->to((string) $user->getEmail())
-                    ->subject("Please Confirm your Email")
+                    ->subject("Veuillez confirmer votre adresse e-mail")
                     ->htmlTemplate("registration/confirmation_email.html.twig"),
             );
 
@@ -90,7 +90,7 @@ class RegistrationController extends AbstractController
 
         $this->addFlash(
             "success",
-            "Your email address has been verified. You can now log in.",
+            "Votre adresse e-mail a été vérifiée. Vous pouvez maintenant vous connecter.",
         );
 
         // l'email étant vérifié, on envoie l'utilisateur se connecter
