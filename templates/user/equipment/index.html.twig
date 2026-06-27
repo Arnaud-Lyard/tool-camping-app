@@ -2,82 +2,64 @@
 
 {% block content %}
 
-{# Header : créer, générer une liste, et barre d'actions groupées (suppression / changement de statut) #}
+<input type="hidden" id="csrf-token" value="{{ csrf_token('equipment') }}">
+
+{# Header : créer, générer une liste #}
 <div class="border-b border-gray-200 pb-5 sm:flex sm:items-center sm:justify-between dark:border-white/10">
   <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ 'equipment.title'|trans }}</h3>
   <div class="mt-3 flex sm:mt-0 sm:ml-4">
-    <button id="generate-list" type="button" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20">{{ 'equipment.generate'|trans }}</button>
-    <button id="create-equipment" type="button" class="ml-3 inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:bg-indigo-500 dark:shadow-none dark:hover:bg-indigo-400 dark:focus-visible:outline-indigo-500">{{ 'equipment.create'|trans }}</button>
+    <button id="generate-list" type="button" {{ equipments is not empty ? 'hidden' : '' }} class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20">{{ 'equipment.generate'|trans }}</button>
+    <button id="create-equipment" type="button" command="show-modal" commandfor="equipment-dialog" class="ml-3 inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:bg-indigo-500 dark:shadow-none dark:hover:bg-indigo-400 dark:focus-visible:outline-indigo-500">{{ 'equipment.create'|trans }}</button>
   </div>
+</div>
+
+{# Filtre par statut (côté client) + sélection globale #}
+<div class="mt-4 flex flex-wrap items-center justify-between gap-2">
+  <span class="isolate inline-flex rounded-md shadow-xs">
+    <button type="button" data-filter="all" class="equipment-filter relative inline-flex items-center gap-x-1.5 rounded-l-md px-3 py-1.5 text-sm font-medium focus:z-10">{{ 'equipment.filter.all'|trans }} <span data-count="all" class="rounded-full bg-black/5 px-1.5 text-xs/5 dark:bg-white/10">0</span></button>
+    <button type="button" data-filter="in_progress" class="equipment-filter relative -ml-px inline-flex items-center gap-x-1.5 px-3 py-1.5 text-sm font-medium focus:z-10">{{ 'equipment.filter.in_progress'|trans }} <span data-count="in_progress" class="rounded-full bg-black/5 px-1.5 text-xs/5 dark:bg-white/10">0</span></button>
+    <button type="button" data-filter="complete" class="equipment-filter relative -ml-px inline-flex items-center gap-x-1.5 rounded-r-md px-3 py-1.5 text-sm font-medium focus:z-10">{{ 'equipment.filter.complete'|trans }} <span data-count="complete" class="rounded-full bg-black/5 px-1.5 text-xs/5 dark:bg-white/10">0</span></button>
+  </span>
+  <button id="select-all" type="button" class="inline-flex items-center rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20">{{ 'equipment.select_all'|trans }}</button>
 </div>
 
 {# Barre d'actions groupées : masquée tant qu'aucune checkbox n'est cochée #}
-<div id="bulk-bar" hidden class="mt-4 flex flex-col gap-3 rounded-md bg-gray-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:bg-white/5">
-  <p class="text-sm font-medium text-gray-700 dark:text-gray-300"><span id="bulk-count">0</span> {{ 'equipment.bulk.selected_label'|trans }}</p>
-  <div class="flex flex-wrap gap-x-2 gap-y-2">
-    <button id="bulk-in-progress" type="button" class="inline-flex items-center rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20">{{ 'equipment.bulk.mark_all_in_progress'|trans }}</button>
-    <button id="bulk-complete" type="button" class="inline-flex items-center rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20">{{ 'equipment.bulk.mark_all_complete'|trans }}</button>
-    <button id="bulk-delete" type="button" class="inline-flex items-center rounded-md bg-red-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-xs hover:bg-red-500 dark:bg-red-500 dark:hover:bg-red-400">{{ 'equipment.bulk.delete'|trans }}</button>
+<div id="bulk-bar" hidden class="mt-4 flex flex-col gap-3 rounded-lg bg-indigo-50 px-4 py-3 shadow-sm ring-1 ring-inset ring-indigo-600/20 sm:flex-row sm:items-center sm:justify-between dark:bg-indigo-500/10 dark:ring-indigo-400/20">
+  <p class="text-sm font-semibold text-indigo-900 dark:text-indigo-200"><span id="bulk-count">0</span> {{ 'equipment.bulk.selected_label'|trans }}</p>
+  <div class="flex items-center gap-x-1">
+    <div class="group relative">
+      <button id="bulk-in-progress" type="button" title="{{ 'equipment.bulk.mark_all_in_progress'|trans }}" aria-label="{{ 'equipment.bulk.mark_all_in_progress'|trans }}" class="flex rounded-md p-2 text-gray-600 hover:bg-white hover:text-indigo-700 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" class="size-5"><circle cx="12" cy="12" r="9" /></svg>
+      </button>
+    </div>
+    <div class="group relative">
+      <button id="bulk-complete" type="button" title="{{ 'equipment.bulk.mark_all_complete'|trans }}" aria-label="{{ 'equipment.bulk.mark_all_complete'|trans }}" class="flex rounded-md p-2 text-gray-600 hover:bg-white hover:text-green-700 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-green-400">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="size-5"><path d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" /></svg>
+      </button>
+    </div>
+    <div class="group relative">
+        <button id="bulk-delete" type="button" title="{{ 'equipment.bulk.delete'|trans }}" aria-label="{{ 'equipment.bulk.delete'|trans }}" class="flex rounded-md p-2 text-gray-600 hover:bg-white hover:text-red-600 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-red-400">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.02-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
+      </button>
+    </div>
   </div>
 </div>
 
-<ul id="equipment-list" role="list" class="mt-2 divide-y divide-gray-100 dark:divide-white/5">
-  <li data-id="1" data-status="in_progress" class="flex items-center justify-between gap-x-6 py-5">
-    <div class="flex min-w-0 items-center gap-x-3">
-      {# Poignée de réorganisation (drag & drop via SortableJS) #}
-      <button type="button" class="drag-handle cursor-move touch-none text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300" aria-label="{{ 'equipment.actions.reorder'|trans }}">
-        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="size-5">
-          <path d="M7 4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM7 10a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM7 16a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM13 4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM13 10a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM13 16a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />
-        </svg>
-      </button>
-      {# Checkbox de sélection groupée #}
-      <input type="checkbox" class="equipment-select size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 dark:border-white/10 dark:bg-white/5" aria-label="{{ 'equipment.actions.select'|trans }}" />
-      <div class="min-w-0">
-        <div class="flex items-start gap-x-3">
-          <p class="text-sm/6 font-semibold text-gray-900 dark:text-white">Tente 4 places</p>
-          <p class="status-badge mt-0.5 rounded-md bg-gray-50 px-1.5 py-0.5 text-xs font-medium text-gray-600 inset-ring inset-ring-gray-500/10 dark:bg-gray-400/10 dark:text-gray-400 dark:inset-ring-gray-400/20">{{ 'equipment.status.in_progress'|trans }}</p>
-        </div>
-        <div class="mt-1 flex items-center gap-x-2 text-xs/5 text-gray-500 dark:text-gray-400">
-          <p class="whitespace-nowrap">{{ 'equipment.quantity'|trans }} : 12</p>
-          <svg viewBox="0 0 2 2" class="size-0.5 fill-current">
-            <circle r="1" cx="1" cy="1" />
-          </svg>
-          <p class="truncate">{{ 'equipment.category'|trans }} : Tentes</p>
-        </div>
-      </div>
-    </div>
-    <div class="flex flex-none items-center gap-x-4">
-      {# Bascule rapide du statut #}
-      <button type="button" class="status-toggle rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20">{{ 'equipment.actions.mark_complete'|trans }}</button>
-      {# Menu : modifier, monter d'un cran, descendre d'un cran, supprimer #}
-      <el-dropdown class="relative flex-none">
-        <button class="relative block text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
-          <span class="absolute -inset-2.5"></span>
-          <span class="sr-only">{{ 'equipment.actions.open_menu'|trans }}</span>
-          <svg viewBox="0 0 20 20" fill="currentColor" data-slot="icon" aria-hidden="true" class="size-5">
-            <path d="M10 3a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM10 8.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM11.5 15.5a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0Z" />
-          </svg>
-        </button>
-        <el-menu anchor="bottom end" popover class="w-40 origin-top-right rounded-md bg-white py-2 shadow-lg outline-1 outline-gray-900/5 transition transition-discrete [--anchor-gap:--spacing(2)] data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in dark:bg-gray-800 dark:shadow-none dark:-outline-offset-1 dark:outline-white/10">
-          <button type="button" class="action-edit block w-full px-3 py-1 text-left text-sm/6 text-gray-900 focus:bg-gray-50 focus:outline-hidden dark:text-white dark:focus:bg-white/5">{{ 'equipment.actions.edit'|trans }}</button>
-          <button type="button" class="action-move-up block w-full px-3 py-1 text-left text-sm/6 text-gray-900 focus:bg-gray-50 focus:outline-hidden dark:text-white dark:focus:bg-white/5">{{ 'equipment.actions.move_up'|trans }}</button>
-          <button type="button" class="action-move-down block w-full px-3 py-1 text-left text-sm/6 text-gray-900 focus:bg-gray-50 focus:outline-hidden dark:text-white dark:focus:bg-white/5">{{ 'equipment.actions.move_down'|trans }}</button>
-          <button type="button" class="action-delete block w-full px-3 py-1 text-left text-sm/6 text-red-600 focus:bg-gray-50 focus:outline-hidden dark:text-red-400 dark:focus:bg-white/5">{{ 'equipment.actions.delete'|trans }}</button>
-        </el-menu>
-      </el-dropdown>
-    </div>
-  </li>
+<ul id="equipment-list" role="list" {{ equipments is empty ? 'hidden' : '' }} class="mt-2 divide-y divide-gray-100 dark:divide-white/5">
+  {% for equipment in equipments %}
+    {{ include('user/equipment/_row.html.twig') }}
+  {% endfor %}
 </ul>
 
 {# État vide : affiché quand il ne reste plus aucun équipement #}
-<div id="empty-state" hidden class="mt-10 text-center">
+<div id="empty-state" {{ equipments is empty ? '' : 'hidden' }} class="mt-10 text-center">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" class="mx-auto size-12 text-gray-400 dark:text-gray-500">
     <path d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" />
   </svg>
   <h3 class="mt-2 text-sm font-semibold text-gray-900 dark:text-white">{{ 'equipment.empty.title'|trans }}</h3>
   <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ 'equipment.empty.text'|trans }}</p>
   <div class="mt-6">
-    <button id="empty-create" type="button" class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:bg-indigo-500 dark:shadow-none dark:hover:bg-indigo-400 dark:focus-visible:outline-indigo-500">
+    <button id="empty-create" type="button" command="show-modal" commandfor="equipment-dialog" class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:bg-indigo-500 dark:shadow-none dark:hover:bg-indigo-400 dark:focus-visible:outline-indigo-500">
       <svg viewBox="0 0 20 20" fill="currentColor" data-slot="icon" aria-hidden="true" class="mr-1.5 -ml-0.5 size-5">
         <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
       </svg>
@@ -85,6 +67,29 @@
     </button>
   </div>
 </div>
+
+{# Modal de création / édition #}
+<el-dialog>
+  <dialog id="equipment-dialog" aria-labelledby="equipment-dialog-title" class="fixed inset-0 size-auto max-h-none max-w-none overflow-y-auto bg-transparent backdrop:bg-transparent">
+    <el-dialog-backdrop class="fixed inset-0 bg-gray-500/75 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in dark:bg-gray-900/50"></el-dialog-backdrop>
+    <div tabindex="0" class="flex min-h-full items-end justify-center p-4 text-center focus:outline-none sm:items-center sm:p-0">
+      <el-dialog-panel class="relative transform overflow-hidden rounded-lg bg-white px-4 pt-5 pb-4 text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 sm:w-full sm:max-w-sm sm:p-6 data-closed:sm:translate-y-0 data-closed:sm:scale-95 dark:bg-gray-800 dark:outline dark:-outline-offset-1 dark:outline-white/10">
+        {{ form_start(form, {'attr': {'id': 'equipment-form', 'novalidate': 'novalidate'}}) }}
+          <h3 id="equipment-dialog-title" class="text-base font-semibold text-gray-900 dark:text-white">{{ 'equipment.modal.create_title'|trans }}</h3>
+          <div class="mt-4">
+            {{ form_label(form.name, null, {'label_attr': {'class': 'block text-sm/6 font-medium text-gray-900 dark:text-white'}}) }}
+            {{ form_widget(form.name, {'attr': {'class': 'mt-2 block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10', 'placeholder': 'equipment.modal.name_placeholder'|trans, 'maxlength': 510}}) }}
+            <p id="equipment-error" hidden class="mt-2 text-sm text-red-600 dark:text-red-400"></p>
+          </div>
+          <div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+            <button type="submit" class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2 dark:bg-indigo-500 dark:hover:bg-indigo-400">{{ 'equipment.modal.save'|trans }}</button>
+            <button type="button" id="equipment-cancel" command="close" commandfor="equipment-dialog" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20">{{ 'equipment.modal.cancel'|trans }}</button>
+          </div>
+        {{ form_end(form) }}
+      </el-dialog-panel>
+    </div>
+  </dialog>
+</el-dialog>
 
 {% endblock %}
 
@@ -103,48 +108,69 @@
     deleteTitle: {{ 'equipment.confirm.delete_title'|trans|json_encode|raw }},
     deleteText: {{ 'equipment.confirm.delete_text'|trans|json_encode|raw }},
     deleteBulkTitle: {{ 'equipment.confirm.delete_bulk_title'|trans|json_encode|raw }},
-    completeBulkTitle: {{ 'equipment.confirm.complete_bulk_title'|trans|json_encode|raw }},
-    inProgressBulkTitle: {{ 'equipment.confirm.in_progress_bulk_title'|trans|json_encode|raw }},
+    modalCreateTitle: {{ 'equipment.modal.create_title'|trans|json_encode|raw }},
+    modalEditTitle: {{ 'equipment.modal.edit_title'|trans|json_encode|raw }},
+    selectAll: {{ 'equipment.select_all'|trans|json_encode|raw }},
+    deselectAll: {{ 'equipment.deselect_all'|trans|json_encode|raw }},
     toastOrderUpdated: {{ 'equipment.toast.order_updated'|trans|json_encode|raw }},
     toastDeleted: {{ 'equipment.toast.deleted'|trans|json_encode|raw }},
     toastDeletedBulk: {{ 'equipment.toast.deleted_bulk'|trans|json_encode|raw }},
     toastStatusChanged: {{ 'equipment.toast.status_changed'|trans|json_encode|raw }},
-    toastMoved: {{ 'equipment.toast.moved'|trans|json_encode|raw }},
-    toastEditTodo: {{ 'equipment.toast.edit_todo'|trans|json_encode|raw }},
-    toastGenerateTodo: {{ 'equipment.toast.generate_todo'|trans|json_encode|raw }},
-    toastCreateTodo: {{ 'equipment.toast.create_todo'|trans|json_encode|raw }},
+    toastCreated: {{ 'equipment.toast.created'|trans|json_encode|raw }},
+    toastUpdated: {{ 'equipment.toast.updated'|trans|json_encode|raw }},
+    toastGenerated: {{ 'equipment.toast.generated'|trans|json_encode|raw }},
+    toastError: {{ 'equipment.toast.error'|trans|json_encode|raw }},
+  };
+
+  const URLS = {
+    base: {{ path('user_equipment_create')|json_encode|raw }},
+    generate: {{ path('user_equipment_generate')|json_encode|raw }},
+    reorder: {{ path('user_equipment_reorder')|json_encode|raw }},
+    status: {{ path('user_equipment_status')|json_encode|raw }},
+    bulkDelete: {{ path('user_equipment_bulk_delete')|json_encode|raw }},
   };
 
   document.addEventListener('DOMContentLoaded', () => {
+    const CSRF = document.getElementById('csrf-token').value;
     const list = document.getElementById('equipment-list');
     const emptyState = document.getElementById('empty-state');
     const bulkBar = document.getElementById('bulk-bar');
     const bulkCount = document.getElementById('bulk-count');
+    const form = document.getElementById('equipment-form');
+    const nameInput = document.getElementById('equipment_name');
+    const errorEl = document.getElementById('equipment-error');
+    const dialogTitle = document.getElementById('equipment-dialog-title');
+    const cancelBtn = document.getElementById('equipment-cancel');
 
+    const ICONS = {
+      in_progress: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" class="size-6 text-gray-400 dark:text-gray-500"><circle cx="12" cy="12" r="9" /></svg>',
+      complete: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="size-6 text-green-600 dark:text-green-400"><path d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" /></svg>',
+    };
     const BADGE_BASE = 'status-badge mt-0.5 rounded-md px-1.5 py-0.5 text-xs font-medium';
     const STATUS = {
       in_progress: { label: I18N.statusInProgress, toggle: I18N.markComplete, cls: 'bg-gray-50 text-gray-600 inset-ring inset-ring-gray-500/10 dark:bg-gray-400/10 dark:text-gray-400 dark:inset-ring-gray-400/20' },
       complete: { label: I18N.statusComplete, toggle: I18N.markInProgress, cls: 'bg-green-50 text-green-700 inset-ring inset-ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:inset-ring-green-500/20' },
     };
 
-    const Toast = Swal.mixin({
-      toast: true,
-      position: 'top-end',
-      showConfirmButton: false,
-      timer: 3000,
-      timerProgressBar: true,
-    });
+    const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
     const toast = (title, icon = 'success') => Toast.fire({ icon, title });
 
     const confirmDialog = (title, text) => Swal.fire({
-      title,
-      text,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: I18N.confirmYes,
-      cancelButtonText: I18N.confirmCancel,
-      confirmButtonColor: '#dc2626',
+      title, text, icon: 'warning', showCancelButton: true,
+      confirmButtonText: I18N.confirmYes, cancelButtonText: I18N.confirmCancel, confirmButtonColor: '#dc2626',
     }).then((r) => r.isConfirmed);
+
+    // Requête serveur (form-encoded + token CSRF). ids transmis en ids[].
+    const send = async (url, params = {}, method = 'POST') => {
+      const body = new URLSearchParams();
+      for (const [k, v] of Object.entries(params)) {
+        if (Array.isArray(v)) v.forEach((x) => body.append(k + '[]', x));
+        else body.append(k, v);
+      }
+      const res = await fetch(url, { method, headers: { 'X-CSRF-Token': CSRF }, body });
+      if (!res.ok) throw new Error('request_failed');
+      return res;
+    };
 
     const applyStatus = (li, state) => {
       li.dataset.status = state;
@@ -152,35 +178,91 @@
       badge.className = BADGE_BASE + ' ' + STATUS[state].cls;
       badge.textContent = STATUS[state].label;
       const toggle = li.querySelector('.status-toggle');
-      if (toggle) toggle.textContent = STATUS[state].toggle;
+      toggle.innerHTML = ICONS[state];
+      toggle.setAttribute('aria-label', STATUS[state].toggle);
+      toggle.setAttribute('title', STATUS[state].toggle);
     };
 
-    // Synchronise badge et libellé du bouton avec le statut initial de chaque item
-    list.querySelectorAll('li').forEach((li) => applyStatus(li, li.dataset.status));
+    const initRow = (li) => applyStatus(li, li.dataset.status);
+    list.querySelectorAll('li').forEach(initRow);
 
     const checkEmpty = () => {
       const hasItems = list.querySelectorAll('li').length > 0;
       list.hidden = !hasItems;
       emptyState.hidden = hasItems;
-      if (!hasItems) {
-        bulkBar.hidden = true;
-      }
+      generateBtn.hidden = hasItems;
+      if (!hasItems) bulkBar.hidden = true;
     };
+
+    const selectAllBtn = document.getElementById('select-all');
+    const visibleBoxes = () => [...list.querySelectorAll('.equipment-select')].filter((cb) => !cb.closest('li').hidden);
 
     const refreshBulkBar = () => {
       const count = list.querySelectorAll('.equipment-select:checked').length;
       bulkCount.textContent = count;
       bulkBar.hidden = count === 0;
+      const boxes = visibleBoxes();
+      const allChecked = boxes.length > 0 && boxes.every((cb) => cb.checked);
+      selectAllBtn.textContent = allChecked ? I18N.deselectAll : I18N.selectAll;
     };
+
+    const selectedIds = () => [...list.querySelectorAll('.equipment-select:checked')].map((cb) => cb.closest('li').dataset.id);
+    const orderedIds = () => [...list.querySelectorAll('li')].map((li) => li.dataset.id);
+    const clearSelection = () => { list.querySelectorAll('.equipment-select:checked').forEach((cb) => { cb.checked = false; }); refreshBulkBar(); };
+
+    const generateBtn = document.getElementById('generate-list');
+
+    // Compteurs affichés dans les filtres
+    const updateCounts = () => {
+      const total = list.querySelectorAll('li').length;
+      const ip = list.querySelectorAll('li[data-status="in_progress"]').length;
+      document.querySelector('[data-count="all"]').textContent = total;
+      document.querySelector('[data-count="in_progress"]').textContent = ip;
+      document.querySelector('[data-count="complete"]').textContent = total - ip;
+    };
+
+    // Re-tri identique au serveur : en cours d'abord, terminés à la fin, puis ordre, puis créé récent
+    const sortList = () => {
+      const rank = (li) => (li.dataset.status === 'in_progress' ? 0 : 1);
+      [...list.children]
+        .sort((a, b) =>
+          (rank(a) - rank(b))
+          || (Number(a.dataset.ordre) - Number(b.dataset.ordre))
+          || (Number(b.dataset.created) - Number(a.dataset.created)))
+        .forEach((li) => list.appendChild(li));
+    };
+
+    // Recale data-ordre sur la position courante (après drag / monter / descendre)
+    const reindexOrdre = () => [...list.children].forEach((li, i) => { li.dataset.ordre = i; });
+
+    // Filtre côté client
+    const FILTER_ACTIVE = 'bg-indigo-600 text-white';
+    const FILTER_IDLE = 'bg-white text-gray-900 inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20';
+    const filterButtons = document.querySelectorAll('.equipment-filter');
+    let currentFilter = 'all';
+    const applyFilter = () => {
+      filterButtons.forEach((b) => {
+        const active = b.dataset.filter === currentFilter;
+        b.className = b.className.replace(FILTER_ACTIVE, '').replace(FILTER_IDLE, '').trim() + ' ' + (active ? FILTER_ACTIVE : FILTER_IDLE);
+      });
+      list.querySelectorAll('li').forEach((li) => {
+        li.hidden = currentFilter !== 'all' && li.dataset.status !== currentFilter;
+      });
+      refreshBulkBar();
+    };
+    filterButtons.forEach((b) => b.addEventListener('click', () => { currentFilter = b.dataset.filter; applyFilter(); }));
+    applyFilter();
+    updateCounts();
+    checkEmpty();
 
     // Réorganisation par drag & drop
     Sortable.create(list, {
       handle: '.drag-handle',
       animation: 150,
-      onEnd: (evt) => {
-        if (evt.oldIndex !== evt.newIndex) {
-          toast(I18N.toastOrderUpdated, 'info');
-        }
+      onEnd: async (evt) => {
+        if (evt.oldIndex === evt.newIndex) return;
+        try { await send(URLS.reorder, { ids: orderedIds() }); reindexOrdre(); toast(I18N.toastOrderUpdated, 'info'); }
+        catch { toast(I18N.toastError, 'error'); location.reload(); }
       },
     });
 
@@ -188,61 +270,121 @@
     list.addEventListener('click', async (e) => {
       const li = e.target.closest('li');
       if (!li) return;
+      const id = li.dataset.id;
 
       if (e.target.closest('.status-toggle')) {
-        applyStatus(li, li.dataset.status === 'in_progress' ? 'complete' : 'in_progress');
-        toast(I18N.toastStatusChanged);
+        const next = li.dataset.status === 'in_progress' ? 'complete' : 'in_progress';
+        try { await send(URLS.status, { ids: [id], status: next }); applyStatus(li, next); sortList(); applyFilter(); updateCounts(); toast(I18N.toastStatusChanged); }
+        catch { toast(I18N.toastError, 'error'); }
       } else if (e.target.closest('.action-edit')) {
-        toast(I18N.toastEditTodo, 'info');
+        openEdit(li);
       } else if (e.target.closest('.action-move-up')) {
         const prev = li.previousElementSibling;
-        if (prev) { list.insertBefore(li, prev); toast(I18N.toastMoved, 'info'); }
+        if (prev) { list.insertBefore(li, prev); await persistOrder(); }
       } else if (e.target.closest('.action-move-down')) {
         const next = li.nextElementSibling;
-        if (next) { list.insertBefore(next, li); toast(I18N.toastMoved, 'info'); }
+        if (next) { list.insertBefore(next, li); await persistOrder(); }
       } else if (e.target.closest('.action-delete')) {
         if (await confirmDialog(I18N.deleteTitle, I18N.deleteText)) {
-          li.remove();
-          toast(I18N.toastDeleted);
-          refreshBulkBar();
-          checkEmpty();
+          try { await send(URLS.base + '/' + id, {}, 'DELETE'); li.remove(); toast(I18N.toastDeleted); refreshBulkBar(); updateCounts(); checkEmpty(); }
+          catch { toast(I18N.toastError, 'error'); }
         }
       }
     });
 
-    list.addEventListener('change', (e) => {
-      if (e.target.classList.contains('equipment-select')) {
-        refreshBulkBar();
-      }
-    });
-
-    // Suppression groupée
-    document.getElementById('bulk-delete').addEventListener('click', async () => {
-      const selected = list.querySelectorAll('.equipment-select:checked');
-      if (!selected.length) return;
-      if (await confirmDialog(I18N.deleteBulkTitle, I18N.deleteText)) {
-        selected.forEach((cb) => cb.closest('li').remove());
-        toast(I18N.toastDeletedBulk);
-        refreshBulkBar();
-        checkEmpty();
-      }
-    });
-
-    // Changement de statut groupé : tout marquer en cours / tout marquer terminé
-    const bulkSetStatus = async (state, title) => {
-      const selected = list.querySelectorAll('.equipment-select:checked');
-      if (!selected.length) return;
-      if (await confirmDialog(title, '')) {
-        selected.forEach((cb) => applyStatus(cb.closest('li'), state));
-        toast(I18N.toastStatusChanged);
-      }
+    const persistOrder = async () => {
+      try { await send(URLS.reorder, { ids: orderedIds() }); reindexOrdre(); toast(I18N.toastOrderUpdated, 'info'); }
+      catch { toast(I18N.toastError, 'error'); location.reload(); }
     };
-    document.getElementById('bulk-in-progress').addEventListener('click', () => bulkSetStatus('in_progress', I18N.inProgressBulkTitle));
-    document.getElementById('bulk-complete').addEventListener('click', () => bulkSetStatus('complete', I18N.completeBulkTitle));
 
-    document.getElementById('generate-list').addEventListener('click', () => toast(I18N.toastGenerateTodo, 'info'));
-    document.getElementById('create-equipment').addEventListener('click', () => toast(I18N.toastCreateTodo, 'info'));
-    document.getElementById('empty-create').addEventListener('click', () => toast(I18N.toastCreateTodo, 'info'));
+    list.addEventListener('change', (e) => {
+      if (e.target.classList.contains('equipment-select')) refreshBulkBar();
+    });
+
+    // Suppression groupée (avec confirmation SweetAlert)
+    document.getElementById('bulk-delete').addEventListener('click', async () => {
+      const ids = selectedIds();
+      if (!ids.length) return;
+      if (await confirmDialog(I18N.deleteBulkTitle, I18N.deleteText)) {
+        try {
+          await send(URLS.bulkDelete, { ids });
+          ids.forEach((id) => list.querySelector(`li[data-id="${id}"]`)?.remove());
+          toast(I18N.toastDeletedBulk); refreshBulkBar(); updateCounts(); checkEmpty();
+        } catch { toast(I18N.toastError, 'error'); }
+      }
+    });
+
+    // Changement de statut groupé : toast seul, sans confirmation
+    const bulkSetStatus = async (state) => {
+      const ids = selectedIds();
+      if (!ids.length) return;
+      try {
+        await send(URLS.status, { ids, status: state });
+        ids.forEach((id) => { const li = list.querySelector(`li[data-id="${id}"]`); if (li) applyStatus(li, state); });
+        clearSelection(); sortList(); applyFilter(); updateCounts(); toast(I18N.toastStatusChanged);
+      } catch { toast(I18N.toastError, 'error'); }
+    };
+    document.getElementById('bulk-in-progress').addEventListener('click', () => bulkSetStatus('in_progress'));
+    document.getElementById('bulk-complete').addEventListener('click', () => bulkSetStatus('complete'));
+
+    // Tout sélectionner / tout désélectionner (sur les éléments visibles)
+    selectAllBtn.addEventListener('click', () => {
+      const boxes = visibleBoxes();
+      const target = !(boxes.length > 0 && boxes.every((cb) => cb.checked));
+      boxes.forEach((cb) => { cb.checked = target; });
+      refreshBulkBar();
+    });
+
+    // Modal création / édition (l'ouverture est gérée par command="show-modal")
+    let editId = null;
+    const resetError = () => { errorEl.hidden = true; errorEl.textContent = ''; };
+    const openCreate = () => { editId = null; dialogTitle.textContent = I18N.modalCreateTitle; nameInput.value = ''; resetError(); };
+    const openEdit = (li) => { editId = li.dataset.id; dialogTitle.textContent = I18N.modalEditTitle; nameInput.value = li.querySelector('.equipment-name').textContent; resetError(); };
+
+    // Soumission du formulaire Symfony (champs equipment[name] + jeton CSRF intégré)
+    const submitForm = async () => {
+      const url = editId ? URLS.base + '/' + editId : URLS.base;
+      const res = await fetch(url, { method: 'POST', body: new URLSearchParams(new FormData(form)) });
+      if (res.status === 422) {
+        const { errors } = await res.json();
+        errorEl.textContent = (errors || []).join(' ');
+        errorEl.hidden = errorEl.textContent === '';
+        return;
+      }
+      if (!res.ok) throw new Error('request_failed');
+      const { html } = await res.json();
+      if (editId) {
+        const li = list.querySelector(`li[data-id="${editId}"]`);
+        if (li) { li.outerHTML = html; initRow(list.querySelector(`li[data-id="${editId}"]`)); }
+        toast(I18N.toastUpdated);
+      } else {
+        list.insertAdjacentHTML('afterbegin', html);
+        initRow(list.firstElementChild);
+        toast(I18N.toastCreated);
+      }
+      cancelBtn.click();
+      sortList(); applyFilter(); refreshBulkBar(); updateCounts(); checkEmpty();
+    };
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try { await submitForm(); }
+      catch { toast(I18N.toastError, 'error'); }
+    });
+
+    document.getElementById('create-equipment').addEventListener('click', openCreate);
+    document.getElementById('empty-create').addEventListener('click', openCreate);
+
+    // Génération d'une liste prédéfinie selon la langue
+    generateBtn.addEventListener('click', async () => {
+      try {
+        const res = await send(URLS.generate, {});
+        const { html } = await res.json();
+        list.insertAdjacentHTML('afterbegin', html);
+        list.querySelectorAll('li').forEach(initRow);
+        sortList(); applyFilter(); updateCounts(); checkEmpty(); toast(I18N.toastGenerated);
+      } catch { toast(I18N.toastError, 'error'); }
+    });
   });
 </script>
 {% endblock %}

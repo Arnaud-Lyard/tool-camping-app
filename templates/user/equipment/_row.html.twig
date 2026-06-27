@@ -1,0 +1,38 @@
+<li data-id="{{ equipment.id }}" data-status="{{ equipment.status.key }}" data-ordre="{{ equipment.ordre }}" data-created="{{ equipment.createdAt|date('U') }}" class="flex items-center justify-between gap-x-6 py-5">
+  <div class="flex min-w-0 items-center gap-x-3">
+    {# Poignée de réorganisation (drag & drop via SortableJS) #}
+    <button type="button" class="drag-handle cursor-move touch-none text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300" aria-label="{{ 'equipment.actions.reorder'|trans }}">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="size-5">
+        <path d="M7 4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM7 10a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM7 16a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM13 4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM13 10a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM13 16a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />
+      </svg>
+    </button>
+    {# Checkbox de sélection groupée #}
+    <input type="checkbox" class="equipment-select size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 dark:border-white/10 dark:bg-white/5" aria-label="{{ 'equipment.actions.select'|trans }}" />
+    <div class="min-w-0">
+      <div class="flex items-start gap-x-3">
+        <p class="equipment-name text-sm/6 font-semibold text-gray-900 dark:text-white">{{ equipment.name }}</p>
+        <p class="status-badge mt-0.5 rounded-md px-1.5 py-0.5 text-xs font-medium"></p>
+      </div>
+    </div>
+  </div>
+  <div class="flex flex-none items-center gap-x-4">
+    {# Bascule rapide du statut : check vert (terminé) ou rond gris (en cours) #}
+    <button type="button" class="status-toggle rounded-full p-1 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:hover:bg-white/10"></button>
+    {# Menu : modifier, monter d'un cran, descendre d'un cran, supprimer #}
+    <el-dropdown class="relative flex-none">
+      <button class="relative block text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+        <span class="absolute -inset-2.5"></span>
+        <span class="sr-only">{{ 'equipment.actions.open_menu'|trans }}</span>
+        <svg viewBox="0 0 20 20" fill="currentColor" data-slot="icon" aria-hidden="true" class="size-5">
+          <path d="M10 3a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM10 8.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM11.5 15.5a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0Z" />
+        </svg>
+      </button>
+      <el-menu anchor="bottom end" popover class="w-40 origin-top-right rounded-md bg-white py-2 shadow-lg outline-1 outline-gray-900/5 transition transition-discrete [--anchor-gap:--spacing(2)] data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in dark:bg-gray-800 dark:shadow-none dark:-outline-offset-1 dark:outline-white/10">
+        <button type="button" command="show-modal" commandfor="equipment-dialog" class="action-edit block w-full px-3 py-1 text-left text-sm/6 text-gray-900 focus:bg-gray-50 focus:outline-hidden dark:text-white dark:focus:bg-white/5">{{ 'equipment.actions.edit'|trans }}</button>
+        <button type="button" class="action-move-up block w-full px-3 py-1 text-left text-sm/6 text-gray-900 focus:bg-gray-50 focus:outline-hidden dark:text-white dark:focus:bg-white/5">{{ 'equipment.actions.move_up'|trans }}</button>
+        <button type="button" class="action-move-down block w-full px-3 py-1 text-left text-sm/6 text-gray-900 focus:bg-gray-50 focus:outline-hidden dark:text-white dark:focus:bg-white/5">{{ 'equipment.actions.move_down'|trans }}</button>
+        <button type="button" class="action-delete block w-full px-3 py-1 text-left text-sm/6 text-red-600 focus:bg-gray-50 focus:outline-hidden dark:text-red-400 dark:focus:bg-white/5">{{ 'equipment.actions.delete'|trans }}</button>
+      </el-menu>
+    </el-dropdown>
+  </div>
+</li>

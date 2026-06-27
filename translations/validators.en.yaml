@@ -8,3 +8,6 @@ password:
     mismatch: "The two passwords must match."
 email:
     required: "Please enter your email address."
+equipment:
+    validation:
+        name_required: "Please enter a name."

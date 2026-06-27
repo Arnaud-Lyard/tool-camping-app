@@ -4,6 +4,7 @@ page:
 
 nav:
     dashboard: "Tableau de bord"
+    equipment: "Équipements"
     team: "Équipe"
     projects: "Projets"
     calendar: "Calendrier"
@@ -63,11 +64,15 @@ equipment:
     title: "Équipements"
     create: "Créer"
     generate: "Générer une liste"
-    quantity: "Quantité"
-    category: "Catégorie"
+    select_all: "Tout sélectionner"
+    deselect_all: "Tout désélectionner"
     status:
         in_progress: "En cours"
         complete: "Terminé"
+    filter:
+        all: "Tous"
+        in_progress: "En cours"
+        complete: "Terminés"
     actions:
         open_menu: "Ouvrir le menu"
         edit: "Modifier"
@@ -78,17 +83,22 @@ equipment:
         mark_in_progress: "Marquer comme en cours"
         reorder: "Réorganiser"
         select: "Sélectionner l'équipement"
+    modal:
+        create_title: "Nouvel équipement"
+        edit_title: "Modifier l'équipement"
+        name_label: "Nom"
+        name_placeholder: "Ex. : Tente 4 places"
+        save: "Enregistrer"
+        cancel: "Annuler"
     bulk:
         selected_label: "sélectionné(s)"
         delete: "Supprimer la sélection"
-        mark_all_in_progress: "Tout marquer en cours"
-        mark_all_complete: "Tout marquer terminé"
+        mark_all_in_progress: "Marquer la sélection en cours"
+        mark_all_complete: "Marquer la sélection terminée"
     confirm:
         delete_title: "Supprimer cet équipement ?"
         delete_text: "Cette action est irréversible."
         delete_bulk_title: "Supprimer les équipements sélectionnés ?"
-        complete_bulk_title: "Marquer comme terminés les équipements sélectionnés ?"
-        in_progress_bulk_title: "Marquer comme en cours les équipements sélectionnés ?"
         confirm: "Oui"
         cancel: "Annuler"
     toast:
@@ -96,10 +106,10 @@ equipment:
         deleted: "Équipement supprimé"
         deleted_bulk: "Équipements supprimés"
         status_changed: "Statut mis à jour"
-        moved: "Élément déplacé"
-        edit_todo: "Édition à venir"
-        generate_todo: "Génération à venir"
-        create_todo: "Création à venir"
+        created: "Équipement créé"
+        updated: "Équipement mis à jour"
+        generated: "Liste générée"
+        error: "Une erreur est survenue"
     empty:
         title: "Aucun équipement"
         text: "Commencez par créer un équipement."

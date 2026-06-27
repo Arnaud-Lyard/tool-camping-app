@@ -4,6 +4,7 @@ page:
 
 nav:
     dashboard: "Dashboard"
+    equipment: "Equipment"
     team: "Team"
     projects: "Projects"
     calendar: "Calendar"
@@ -63,11 +64,15 @@ equipment:
     title: "Equipment"
     create: "Create"
     generate: "Generate a list"
-    quantity: "Quantity"
-    category: "Category"
+    select_all: "Select all"
+    deselect_all: "Deselect all"
     status:
         in_progress: "In progress"
         complete: "Complete"
+    filter:
+        all: "All"
+        in_progress: "In progress"
+        complete: "Completed"
     actions:
         open_menu: "Open menu"
         edit: "Edit"
@@ -78,17 +83,22 @@ equipment:
         mark_in_progress: "Mark as in progress"
         reorder: "Reorder"
         select: "Select equipment"
+    modal:
+        create_title: "New equipment"
+        edit_title: "Edit equipment"
+        name_label: "Name"
+        name_placeholder: "e.g. 4-person tent"
+        save: "Save"
+        cancel: "Cancel"
     bulk:
         selected_label: "selected"
         delete: "Delete selection"
-        mark_all_in_progress: "Mark all in progress"
-        mark_all_complete: "Mark all complete"
+        mark_all_in_progress: "Mark selection as in progress"
+        mark_all_complete: "Mark selection as complete"
     confirm:
         delete_title: "Delete this equipment?"
         delete_text: "This action cannot be undone."
         delete_bulk_title: "Delete the selected equipment?"
-        complete_bulk_title: "Mark the selected equipment as complete?"
-        in_progress_bulk_title: "Mark the selected equipment as in progress?"
         confirm: "Yes"
         cancel: "Cancel"
     toast:
@@ -96,10 +106,10 @@ equipment:
         deleted: "Equipment deleted"
         deleted_bulk: "Equipment deleted"
         status_changed: "Status updated"
-        moved: "Item moved"
-        edit_todo: "Editing coming soon"
-        generate_todo: "Generation coming soon"
-        create_todo: "Creation coming soon"
+        created: "Equipment created"
+        updated: "Equipment updated"
+        generated: "List generated"
+        error: "Something went wrong"
     empty:
         title: "No equipment"
         text: "Get started by creating an equipment item."
