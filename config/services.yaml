@@ -23,5 +23,13 @@ services:
         exclude:
             - "../src/Infrastructure/Migrations/"
 
+    Logtail\Monolog\LogtailHandler:
+        autoconfigure: true
+        arguments:
+            $sourceToken: '%env(BETTER_STACK_SOURCE_TOKEN)%'
+            $endpoint: '%env(BETTER_STACK_SOURCE_ENDPOINT)%'
+        tags:
+            - { name: monolog.handler }
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
